@@ -11,6 +11,7 @@ Set the following in the file `config.ini` before running the script
 
 - `url` : URL for pingo survey
 - `loglevel` : Sets the level of logging (0 - less information / 5 - all information)
+- `times` : How many times the bot should vote
 
 
 #### REQUIREMENTS
