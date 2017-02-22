@@ -1,4 +1,4 @@
-# Pingo Voting Bot
+# Voting Bot for Pingo
 This is only a proof of concept.
 
 This is a voting bot for the voting system of the University of Paderborn. 
