@@ -1,5 +1,5 @@
 # Voting Bot for Pingo
-This is only a proof of concept.
+This is only a proof of concept. This should not be used in real scenarios to manipulate votes.
 
 This is a voting bot for the voting system of the University of Paderborn. 
 You can reach the page with this link: http://pingo.upb.de/
