@@ -1,5 +1,10 @@
 # Pingo-Voting-Bot
-This is only a proof of concept
+This is only a proof of concept.
+
+This is a voting bot for the voting system of the University of Paderborn. 
+You can reach the page with this link: http://pingo.upb.de/
+
+
 
 
 Copyright 2017 Daniel Vogt
