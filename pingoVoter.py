@@ -177,6 +177,7 @@ conf.read(os.path.join(project_dir, 'config.ini'))
 
 
 loglevel = checkQuotationMarks(conf.get("other", "loglevel"))
+votingtimes = int(conf.get("voting", "times"))
   
 authentication_url = addSlashIfNeeded(checkQuotationMarks(conf.get("auth", "url")))
 
@@ -203,7 +204,7 @@ except Exception:
 LoginContents = donwloadFile(responseLogin)
   
 
-#Lookup in the Moodle source if it is standard   ("Logout" on every Page)
+
 LoginSoup = BeautifulSoup(LoginContents, "lxml") 
 
 LoginStatusConntent = LoginSoup.find(id="survey-content")
@@ -227,28 +228,15 @@ log("Got all options!", 2)
  
  
 
-#Lookup in the Moodle source if it is standard (Domain + subfolder)
 mainpageURL = responseLogin.geturl()
-
-domainMoodle = ""
-if not mainpageURL[-1] == "/":
-   mainpageURL = mainpageURL + "/" 
-
-if mainpageURL.startswith("https://"):
-   domainMoodle = mainpageURL[8:]
-
-if mainpageURL.startswith("http://"):
-   domainMoodle = mainpageURL[7:]
-
-domainMoodle = domainMoodle.split("/")[0]
-  
+ 
 
 
 
 log("Start Vottong...", 1)
  
 anzOptionen = len(optionsValues)
-anzDurch = anzOptionen * 20
+anzDurch = anzOptionen * votingtimes
 anzVotet = 0
 
 while anzVotet < anzDurch:
@@ -262,19 +250,37 @@ while anzVotet < anzDurch:
    try:
       responseLogin = urllib2.urlopen(authentication_url, timeout=10)
    except Exception:
-      log("Connection lost! It is not possible to connect to pingo! 1")
+      log("Connection lost! It is not possible to connect to pingo!")
       anzVotet += anzOptionen
       continue
    LoginContents = donwloadFile(responseLogin)
      
    
-   #Lookup in the Moodle source if it is standard   ("Logout" on every Page)
    LoginSoup = BeautifulSoup(LoginContents, "lxml") 
    
-   
+   if LoginSoup is None:
+      log("Something faild! An empty file was returned.")
+      anzVotet += anzOptionen
+      continue
+
    option_vote = optionsValues[(anzVotet - 1) % anzOptionen][1]
-   authenticity_token = LoginSoup.find("input", {"name":"authenticity_token"}).get("value")
-   id_vote = LoginSoup.find("input", {"name":"id"}).get("value")
+   authenticity_tokenSoup = LoginSoup.find("input", {"name":"authenticity_token"})
+
+   if authenticity_tokenSoup is None:
+      log("Something faild! Authenticity_token was not found.")
+      anzVotet += anzOptionen
+      continue
+
+   authenticity_token = authenticity_tokenSoup.get("value")
+
+   id_voteSoup = LoginSoup.find("input", {"name":"id"})
+
+   if id_voteSoup is None:
+      log("Something faild! Id_vote was not found.")
+      anzVotet += anzOptionen
+      continue
+      
+   id_vote = id_voteSoup.get("value")
    
    payload = {
        'utf8': '/',
@@ -288,15 +294,15 @@ while anzVotet < anzDurch:
    
    req = urllib2.Request("http://pingo.upb.de/vote", data)
    #response = urllib2.urlopen(req)
+   log("Try to vote.", 2)
    try:
       responseLogin = urllib2.urlopen(req, timeout=10)
    except Exception:
-      log("Connection lost! It is not possible to connect to pingo! 2")
+      log("Connection lost! It is not possible to connect to pingo!")
       anzVotet += anzOptionen
       continue
-   log("Votet for: " + optionsValues[(anzVotet - 1) % anzOptionen][1])
+   log("Voted for: " + optionsValues[(anzVotet - 1) % anzOptionen][1])
   
 
-#Lookup in the Moodle source if it is standard (moodlePath/my/ are my courses)
 
 log("Voting Complete")
