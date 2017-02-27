@@ -190,16 +190,27 @@ if LoginStatusConntent is None :
    exit(1)
 
 
-OptionList = LoginStatusConntent.find_all(class_="center-block well") #("input", {"name":"option"})
+OptionList = LoginStatusConntent.find_all("input", {"name":"option"})
 
 optionsValues = []
 
 for option in OptionList:
-   log("Voting Option: " + option.text)
-   optionValue = option.find("input", {"name":"option"})
-   optionsValues.append([option.text, optionValue.get("value")])
+   log("Voting Option: " + option.get("value"))
+   optionsValues.append(option.get("value"))
+
+if len(optionsValues) == 0:
+   OptionList = LoginStatusConntent.find_all("input", {"name":"option[]"})
+
+   optionsValues = []
+   
+   for option in OptionList:
+      log("Voting Option: " + option.get("value"))
+      optionsValues.append(option.get("value"))
 
  
+if len(optionsValues) == 0:
+   log("No options found!")
+   exit(1)
 
 log("Got all options!", 2)
  
@@ -221,13 +232,21 @@ while anzVotet < anzDurch:
 
    cj = cookielib.CookieJar()
    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
-   opener.addheaders = [('User-agent', 'HeyThanksForWatchingThisAgenet' + str(randint(0,9999999)))]
+   opener.addheaders = [('User-agent', 'Mozilla/5.0 (X11; Linux x86_64; rv:51.0) Gecko/20100101 Firefox/51.0')]
+   #opener.addheaders.append(('Cookie', 'voter_id=' + str(randint(0,9999999))))
    urllib2.install_opener(opener)
    
    try:
+      responseLogin = urllib2.urlopen("http://pingo.upb.de/", timeout=10)
+   except Exception:
+      log("Connection lost! It is not possible to visit to pingo!")
+      anzVotet += anzOptionen
+      continue
+
+   try:
       responseLogin = urllib2.urlopen(authentication_url, timeout=10)
    except Exception:
-      log("Connection lost! It is not possible to connect to pingo!")
+      log("Connection lost! It is not possible to login to pingo!")
       anzVotet += anzOptionen
       continue
    LoginContents = donwloadFile(responseLogin)
@@ -240,7 +259,7 @@ while anzVotet < anzDurch:
       anzVotet += anzOptionen
       continue
 
-   option_vote = optionsValues[(anzVotet - 1) % anzOptionen][1]
+   option_vote = optionsValues[(anzVotet - 1) % anzOptionen]
    authenticity_tokenSoup = LoginSoup.find("input", {"name":"authenticity_token"})
 
    if authenticity_tokenSoup is None:
@@ -264,6 +283,7 @@ while anzVotet < anzDurch:
        'authenticity_token': authenticity_token,
        'option': option_vote,
        'id': id_vote,
+       'commit': 'Vote!'
    }
     
      
@@ -275,10 +295,13 @@ while anzVotet < anzDurch:
    try:
       responseLogin = urllib2.urlopen(req, timeout=10)
    except Exception:
-      log("Connection lost! It is not possible to connect to pingo!")
-      anzVotet += anzOptionen
-      continue
-   log("Voted for: " + optionsValues[(anzVotet - 1) % anzOptionen][1])
+      try:
+        responseLogin = urllib2.urlopen(authentication_url, timeout=10)
+      except Exception:
+        log("Connection lost! It is not possible to vote on pingo!")
+        anzVotet += anzOptionen
+        continue
+   log("Voted for: " + optionsValues[(anzVotet - 1) % anzOptionen])
   
 
 
